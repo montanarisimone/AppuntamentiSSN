@@ -80,8 +80,35 @@ def get_safe_description(prescription):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gestore del comando /start."""
     user_id = update.effective_user.id
+
+    # Carica gli utenti autorizzati per assicurarsi che i dati siano aggiornati
+    load_authorized_users()
+
+    if not authorized_users:
+        authorized_users.append(str(user_id))
+        save_authorized_users()
+        logger.info(f"Primo utente {user_id} aggiunto come amministratore")
+        
+        # Creiamo una tastiera personalizzata con tutte le funzionalità
+        keyboard = [
+            ["➕ Aggiungi Prescrizione", "➖ Rimuovi Prescrizione"],
+            ["📋 Lista Prescrizioni", "🔄 Verifica Disponibilità"],
+            ["🔔 Gestisci Notifiche", "⏱ Imposta Filtro Date"],
+            ["🏥 Prenota", "🤖 Prenota Automaticamente"],
+            ["📝 Le mie Prenotazioni", "ℹ️ Informazioni"],
+            ["🔑 Autorizza Utente"]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        await update.message.reply_text(
+            f"👑 Benvenuto, {update.effective_user.first_name}!\n\n"
+            "Sei stato impostato come amministratore del bot.\n\n"
+            "Questo bot ti aiuterà a monitorare le disponibilità del Servizio Sanitario Nazionale.",
+            reply_markup=reply_markup
+        )
+        return
     
-    # Controlliamo se l'utente è autorizzato
+    # Controlliamo se l'utente è autorizzato (per gli utenti successivi)
     if str(user_id) not in authorized_users:
         await update.message.reply_text(
             "🔒 Non sei autorizzato ad utilizzare questo bot. Contatta l'amministratore per ottenere l'accesso."
